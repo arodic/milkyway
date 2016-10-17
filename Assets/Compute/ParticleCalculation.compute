@@ -1,0 +1,79 @@
+﻿//Tell unity that we have defined a kernel
+#pragma kernel UpdateParticles
+
+
+//Store Particle data in a struct
+struct Particle
+{
+  float3 position;
+  float3 velocity;
+  float3 color;
+};
+
+//Buffer for all the particles. Stride of 36
+RWStructuredBuffer<Particle> particles;
+
+//Use this texture to change the color of the particle based on speed
+Texture2D HueTexture;
+
+//notice the name of the sampler. Prefix sampler to the texture name to make sure it uses the unity settings. This thread explains it: (see aras' reply)
+//http://forum.unity3d.com/threads/163591-Compute-Shader-SamplerState-confusion
+SamplerState samplerHueTexture;
+
+float deltaTime;
+
+//Since we only have a long list of particles, our thread group is just a flat block of threads in the x direction
+//128 threads in a group is a good amount for a couple of reasons
+[numthreads(128, 1, 1)]
+void UpdateParticles(uint3 id : SV_DispatchThreadID)
+{
+  //set the color based on the speed
+  float3 velocity = particles[id.x].velocity;
+  float velocityMagnitude = sqrt(dot(velocity, velocity));
+  float uvx = velocityMagnitude * 0.025f;
+
+  //Notice the SampleLevel. Just like in a vertex shader, we need to specify the mip map
+  /*particles[id.x].color = HueTexture.SampleLevel(samplerHueTexture, float2(uvx, 0.0f), 0.0f).rgb;*/
+
+
+  // rotation around center
+  // float distanceSqr = dot(particles[id.x].position, particles[id.x].position);
+  // float3 direction = cross(normalize(particles[id.x].position), float3(0.0f, 1.0f, 0.0f));
+  // particles[id.x].velocity += 1 / distanceSqr * direction * 20.0f;
+
+  //Apply velocity
+  particles[id.x].position += particles[id.x].velocity * deltaTime;
+}
+
+//================
+//Bonus: Random number generator
+//Using xorshift, and thread ID as a seed. If you only use xorshift,
+//there is too much correlation, so we first hash the seed id in RandomFirst()
+//See: http://www.reedbeta.com/blog/2013/01/12/quick-and-easy-gpu-random-numbers-in-d3d11/
+
+uint rngState;
+int randomOffset;
+
+#define UINT_MAXF 4294967290.0f
+
+float RandomFirst(uint threadId)
+{
+  rngState = threadId + randomOffset; //also add the random offset so we globally randomize the seeds each frame
+  //wang hash the seed first to get rid of correlation.
+  rngState = (rngState ^ 61) ^ (rngState >> 16);
+  rngState *= 9;
+  rngState = rngState ^ (rngState >> 4);
+  rngState *= 0x27d4eb2d;
+  rngState = rngState ^ (rngState >> 15);
+  return (float)rngState / UINT_MAXF;
+}
+
+float RandomValue()
+{
+  // Xorshift algorithm from George Marsaglia's paper
+  // You could use RandomFirst() all the time - it'd just be more expensive.
+  rngState ^= (rngState << 13);
+  rngState ^= (rngState >> 17);
+  rngState ^= (rngState << 5);
+  return (float) rngState / UINT_MAXF;
+}
