@@ -36,7 +36,7 @@ Shader "wnRainbow/Rainbow"
         float3 normal;
         float2 uv;
         float life;
-        float debug;
+        int id;
       };
       struct Index {
         int id0;
@@ -59,6 +59,7 @@ Shader "wnRainbow/Rainbow"
         float2 uv: TEXCOORD2;
         float4 posWorld : TEXCOORD3;
         float2 viewNormal : TEXCOORD4;
+        float life: TEXCOORD5;
       };
 
       v2f vert(uint id : SV_VertexID) {
@@ -69,24 +70,29 @@ Shader "wnRainbow/Rainbow"
         o.color = vertices[i.id0].color;
         o.normalDir = vertices[i.id0].normal;
         o.uv = vertices[i.id0].uv;
+        o.life = vertices[i.id0].life;
         o.viewNormal = normalize(mul((float3x3)UNITY_MATRIX_MV, o.normalDir));
         return o;
       }
 
       float4 frag(v2f i, fixed facing : VFACE) : COLOR {
         float3 normalDirection = normalize(i.normalDir);
-        if ( facing < 0 ) normalDirection = -normalDirection;
+        if ( facing < 0 ) {
+          normalDirection = -normalDirection;
+        }
         float3 viewDirection = normalize(_WorldSpaceCameraPos.xyz - i.posWorld.xyz);
         fixed4 rainbow = tex2D(_Rainbow, i.uv.yx);
-        // return float4(rainbow.rgb, 0.5f);
-        // return float4(i.normalDir, 0.5f);
 
+        float d = dot(normalDirection, viewDirection);
         half3 finalColor = (
           rainbow.rgb * _TintOpacity.rgb +
           rainbow.rgb * _TintOpacity.a +
           rainbow.rgb * _FresnelColor.rgb * pow(1.0 - max(0.0, dot(normalDirection, viewDirection)), _Fresnel)
         );
 
+        // float d = max(0, dot(normalDirection, viewDirection));
+        // if (d < 0.0) return float4(1.0,0.0,0.0,1.0);
+        // return float4(i.life, rainbow.rg, 1.0);
         // finalColor.rgb = max(0, dot(normalDirection, viewDirection));
 
         return fixed4(finalColor, 0.0);

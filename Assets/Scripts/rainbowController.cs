@@ -26,6 +26,13 @@ public class rainbowController : MonoBehaviour {
   public ComputeShader computeShader;
   public Material ParticleMaterial;
 
+  [Range(0, 100)]
+	public float life = 10f;
+	public Vector3 force0 = new Vector3(1,0,0);
+	public Vector3 force1 = new Vector3(0,1,0);
+	public Vector3 force2 = new Vector3(-1,0,0);
+	public Vector3 force3 = new Vector3(0,-1,0);
+
   private const int computeGroupSize = 128;
   private int computeKernel;
   private int numberOfGroups;
@@ -44,7 +51,7 @@ public class rainbowController : MonoBehaviour {
     public Vector3 normal;
     public Vector2 uv;
     public float life;
-    public float debug;
+    public int id;
   };
   private int vertexCount;
 
@@ -90,16 +97,16 @@ public class rainbowController : MonoBehaviour {
         vertices[x + z * resX1].color = Random.insideUnitSphere * 10.0f;
         vertices[x + z * resX1].normal = Vector3.forward;
         vertices[x + z * resX1].uv = new Vector2( (float)x / resX, (float)z / resY );
-        vertices[x + z * resX1].life = 0;
-        vertices[x + z * resX1].debug = 0;
+        vertices[x + z * resX1].life = -(float)x / resX;
+        vertices[x + z * resX1].id = (int)(x + resX1 * z) * 6;
       }
     }
     vertexBuffer.SetData(vertices);
 
     Index[] indices = new Index[indexCount];
     int t = 0;
-    for (int v = 0; v < resY; v++) {
-      for (int u = 0; u < resX; u++) {
+    for (int v = 0; v <= resY; v++) {
+      for (int u = 0; u <= resX; u++) {
         int vp  = Mathf.Min(( v + 1 ), resY);
         int vpp = Mathf.Min(( v + 2 ), resY);
         int vm  = Mathf.Max(( v - 1 ), 0);
@@ -186,7 +193,13 @@ public class rainbowController : MonoBehaviour {
     computeShader.SetFloat("_CurlFreq", curlFreq);
     computeShader.SetFloat("_Spring", spring);
     computeShader.SetFloat("_Smooth", smooth);
-    numberOfGroups = Mathf.CeilToInt((float)indexCount / computeGroupSize);
+    computeShader.SetFloat("_Life", life);
+    computeShader.SetVector("_Force0", force0);
+    computeShader.SetVector("_Force1", force1);
+    computeShader.SetVector("_Force2", force2);
+    computeShader.SetVector("_Force3", force3);
+    // numberOfGroups = Mathf.CeilToInt((float)indexCount / computeGroupSize);
+    numberOfGroups = Mathf.CeilToInt((float)vertexCount / computeGroupSize);
     computeShader.Dispatch(computeKernel, numberOfGroups, 1, 1);
   }
 

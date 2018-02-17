@@ -271,16 +271,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f5f5eb248cf47464a9fef9c1ccc2b15a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  xSize: 50
-  ySize: 20
-  resolution: 20
-  damping: 0.736
-  curl: 0.196
-  curlFreq: 1
-  spring: 0.73
-  smooth: 1
+  xSize: 30
+  ySize: 1
+  resolution: 50
+  damping: 0.142
+  curl: 0.439
+  curlFreq: 0.297
+  spring: 0.615
+  smooth: 0.493
   computeShader: {fileID: 7200000, guid: e6263e5cc91676b4e88439dab9d77b38, type: 3}
   ParticleMaterial: {fileID: 2100000, guid: a2e119358428b0c47baa0e4e3d891561, type: 2}
+  life: 100
+  force0: {x: -1, y: 0, z: 0}
+  force1: {x: 0, y: 1, z: 0}
+  force2: {x: 1, y: 0, z: 0}
+  force3: {x: 0, y: -1, z: 0}
 --- !u!4 &1236951468
 Transform:
   m_ObjectHideFlags: 0

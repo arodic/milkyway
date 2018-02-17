@@ -10,7 +10,7 @@ struct Vertex {
   float3 normal;
   float2 uv;
   float life;
-  float debug;
+  int id;
 };
 struct Index {
   int id0;
@@ -34,6 +34,13 @@ float _Curl;
 float _CurlFreq;
 float _Spring;
 float _Smooth;
+float _Life;
+float3 _Force0;
+float3 _Force1;
+float3 _Force2;
+float3 _Force3;
+
+#define PI 3.14159265359
 
 float3 springForce( float3 p1 , float3 p2 , float d ){
   float3 dir = p1 - p2;
@@ -49,7 +56,14 @@ float3 springForce( float3 p1 , float3 p2 , float d ){
 
 [numthreads(128, 1, 1)]
 void CSMain(uint3 id : SV_DispatchThreadID) {
-  Index i = indices[id.x];
+
+
+  int idx = vertices[id.x].id;
+  Index i = indices[idx];
+
+  vertices[i.id0].life = fmod(vertices[i.id0].life + _Delta / _Life, 1.0);
+  if (vertices[i.id0].life < 0.0) return;
+
   float3 pos = vertices[i.id0].position;
   float3 pos1 = vertices[i.id1].position;
   float3 pos2 = vertices[i.id2].position;
@@ -59,44 +73,61 @@ void CSMain(uint3 id : SV_DispatchThreadID) {
 
   float3 velocity = vertices[i.id0].velocity;
 
-  float3 up = pos1 - pos;
-  float3 right = pos2 - pos;
-  float3 down = pos3 - pos;
-  float3 left = pos4 - pos;
+  float3 right = pos1 - pos;
+  float3 down = pos2 - pos;
+  float3 left = pos3 - pos;
+  float3 up = pos4 - pos;
 
-  vertices[i.id0].normal = cross(normalize(up), normalize(right));
+  if (length(up) < 0.00001) { up = -down; }
+  if (length(down) < 0.00001) { down = -up; }
+  if (length(left) < 0.00001) { left = -right; }
+  if (length(right) < 0.00001) { right = -left; }
+
+  float3 n1 = cross(normalize(up), normalize(right));
+  float3 n2 = cross(normalize(right), normalize(down));
+  float3 n3 = cross(normalize(down), normalize(left));
+  float3 n4 = cross(normalize(left), normalize(up));
+  vertices[i.id0].normal = (n1 + n3);
+  // vertices[i.id0].normal = n1;
+  // vertices[i.id0].normal = (n1 + n2 + n3 + n4);
 
   velocity *= 1.0 - (1.0 * _Damping * _Delta);
 
   float3 smooth = float3(0,0,0);
-  smooth += up * pow(length(up) / 2.0, 2.0);
-  smooth += right * pow(length(right) / 2.0, 2.0);
-  smooth += down * pow(length(down) / 2.0, 2.0);
-  smooth += left * pow(length(left) / 2.0, 2.0);
-  velocity += smooth * _Smooth * _Delta * 10.0;
+  smooth += up * pow(length(up) * 0.5, 2.0);
+  smooth += right * pow(length(right) * 0.5, 2.0);
+  smooth += down * pow(length(down) * 0.5, 2.0);
+  smooth += left * pow(length(left) * 0.5, 2.0);
+  velocity += smooth * _Smooth * _Delta * 50.0;
 
   float3 curl = curlNoise(pos * _CurlFreq + float3(0.0, _Time * 0.1, 0.0)) * 0.02;
   velocity += curl * _Curl * _Delta;
 
   float3 spring = (float3)0;
-  float d = 1.0 / _Resolution;
+  float d = 1.0 / _Resolution  + max(0.0, vertices[i.id0].life) * 0.2;
+  // float d = 1.0 / _Resolution;
   spring += springForce(pos, pos1, d);
   spring += springForce(pos, pos2, d);
   spring += springForce(pos, pos3, d);
   spring += springForce(pos, pos4, d);
   velocity += spring * _Spring * _Delta;
 
-  if (length(velocity) > 0.001) {
-    velocity = normalize(velocity) * min(length(velocity), 0.0125);
-  }
 
-  // float3 fwd = pos1 - pos;
-  // if (length(fwd) < 0.000005) {
-  //    fwd = -(pos3 - pos);
-  // }
-  // velocity += fwd * 0.0005;
+  float forceCycle = fmod(vertices[i.id0].life, 1.0) * PI * 1.5;
+  float force0 = max(0.0, sin(forceCycle + PI / 2.0));
+  float force1 = max(0.0, sin(forceCycle));
+  float force2 = max(0.0, sin(forceCycle + 3.*PI / 2.0));
+  float force3 = max(0.0, sin(forceCycle + 2.*PI / 2.0));
+  velocity += force0 * _Force0 * 0.0001;
+  velocity += force1 * _Force1 * 0.0001;
+  velocity += force2 * _Force2 * 0.0001;
+  velocity += force3 * _Force3 * 0.0001;
+  velocity += right * 0.0005;
 
   vertices[i.id0].velocity = velocity;
 
+  if (length(velocity) > 0.001) {
+    velocity = normalize(velocity) * min(length(velocity), 0.125);
+  }
   vertices[i.id0].position += velocity;
 }
