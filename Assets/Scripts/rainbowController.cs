@@ -14,13 +14,13 @@ public class rainbowController : MonoBehaviour {
 	public int resolution = 20;
   [Range(0, 1)]
 	public float damping = 0.1f;
-  [Range(0, 1)]
+  [Range(0, 2)]
 	public float curl = 1f;
   [Range(0, 1)]
 	public float curlFreq = 1f;
-  [Range(0, 1)]
+  [Range(0, 2)]
 	public float spring = 1f;
-  [Range(0, 1)]
+  [Range(0, 2)]
 	public float smooth = 1f;
 
   public ComputeShader computeShader;

@@ -93,6 +93,18 @@ void CSMain(uint3 id : SV_DispatchThreadID) {
 
   velocity *= 1.0 - (1.0 * _Damping * _Delta);
 
+  float forceCycle = fmod(vertices[i.id0].life, 1.0) * PI * 1.5;
+  float force0 = max(0.0, sin(forceCycle + PI / 2.0));
+  float force1 = max(0.0, sin(forceCycle));
+  float force2 = max(0.0, sin(forceCycle + 3.*PI / 2.0));
+  float force3 = max(0.0, sin(forceCycle + 2.*PI / 2.0));
+  float3 force = force0 * _Force0;
+  force += force1 * _Force1;
+  force += force2 * _Force2;
+  force += force3 * _Force3;
+  // force += right * 0.01;
+  velocity += force * _Delta * 0.05;
+
   float3 smooth = float3(0,0,0);
   smooth += up * pow(length(up) * 0.5, 2.0);
   smooth += right * pow(length(right) * 0.5, 2.0);
@@ -102,6 +114,7 @@ void CSMain(uint3 id : SV_DispatchThreadID) {
 
   float3 curl = curlNoise(pos * _CurlFreq + float3(0.0, _Time * 0.1, 0.0)) * 0.02;
   velocity += curl * _Curl * _Delta;
+  // velocity += curl * _Curl * _Delta * (1.0 + length(force)) * 1.0;
 
   float3 spring = (float3)0;
   float d = 1.0 / _Resolution  + max(0.0, vertices[i.id0].life) * 0.2;
@@ -111,18 +124,6 @@ void CSMain(uint3 id : SV_DispatchThreadID) {
   spring += springForce(pos, pos3, d);
   spring += springForce(pos, pos4, d);
   velocity += spring * _Spring * _Delta;
-
-
-  float forceCycle = fmod(vertices[i.id0].life, 1.0) * PI * 1.5;
-  float force0 = max(0.0, sin(forceCycle + PI / 2.0));
-  float force1 = max(0.0, sin(forceCycle));
-  float force2 = max(0.0, sin(forceCycle + 3.*PI / 2.0));
-  float force3 = max(0.0, sin(forceCycle + 2.*PI / 2.0));
-  velocity += force0 * _Force0 * 0.0001;
-  velocity += force1 * _Force1 * 0.0001;
-  velocity += force2 * _Force2 * 0.0001;
-  velocity += force3 * _Force3 * 0.0001;
-  velocity += right * 0.0005;
 
   vertices[i.id0].velocity = velocity;
 
