@@ -61,15 +61,14 @@ void CSMain(uint3 id : SV_DispatchThreadID) {
   int idx = vertices[id.x].id;
   Index i = indices[idx];
 
-  vertices[i.id0].life = fmod(vertices[i.id0].life + _Delta / _Life, 1.0);
-  if (vertices[i.id0].life < 0.0) return;
+  // vertices[i.id0].life = fmod(vertices[i.id0].life + _Delta / _Life, 1.0);
+  // if (vertices[i.id0].life < 0.0) return;
 
   float3 pos = vertices[i.id0].position;
   float3 pos1 = vertices[i.id1].position;
   float3 pos2 = vertices[i.id2].position;
   float3 pos3 = vertices[i.id3].position;
   float3 pos4 = vertices[i.id4].position;
-
 
   float3 velocity = vertices[i.id0].velocity;
 
@@ -84,26 +83,26 @@ void CSMain(uint3 id : SV_DispatchThreadID) {
   if (length(right) < 0.00001) { right = -left; }
 
   float3 n1 = cross(normalize(up), normalize(right));
-  float3 n2 = cross(normalize(right), normalize(down));
-  float3 n3 = cross(normalize(down), normalize(left));
-  float3 n4 = cross(normalize(left), normalize(up));
-  vertices[i.id0].normal = (n1 + n3);
-  // vertices[i.id0].normal = n1;
+  // float3 n2 = cross(normalize(right), normalize(down));
+  // float3 n3 = cross(normalize(down), normalize(left));
+  // float3 n4 = cross(normalize(left), normalize(up));
+  // vertices[i.id0].normal = (n1 + n3);
+  vertices[i.id0].normal = n1;
   // vertices[i.id0].normal = (n1 + n2 + n3 + n4);
 
   velocity *= 1.0 - (1.0 * _Damping * _Delta);
 
-  float forceCycle = fmod(vertices[i.id0].life, 1.0) * PI * 1.5;
-  float force0 = max(0.0, sin(forceCycle + PI / 2.0));
-  float force1 = max(0.0, sin(forceCycle));
-  float force2 = max(0.0, sin(forceCycle + 3.*PI / 2.0));
-  float force3 = max(0.0, sin(forceCycle + 2.*PI / 2.0));
-  float3 force = force0 * _Force0;
-  force += force1 * _Force1;
-  force += force2 * _Force2;
-  force += force3 * _Force3;
+  // float forceCycle = fmod(vertices[i.id0].life, 1.0) * PI * 1.5;
+  // float force0 = max(0.0, sin(forceCycle + PI / 2.0));
+  // float force1 = max(0.0, sin(forceCycle));
+  // float force2 = max(0.0, sin(forceCycle + 3.*PI / 2.0));
+  // float force3 = max(0.0, sin(forceCycle + 2.*PI / 2.0));
+  // float3 force = force0 * _Force0;
+  // force += force1 * _Force1;
+  // force += force2 * _Force2;
+  // force += force3 * _Force3;
   // force += right * 0.01;
-  velocity += force * _Delta * 0.05;
+  // velocity += force * _Delta * 0.05;
 
   float3 smooth = float3(0,0,0);
   smooth += up * pow(length(up) * 0.5, 2.0);
@@ -117,7 +116,7 @@ void CSMain(uint3 id : SV_DispatchThreadID) {
   // velocity += curl * _Curl * _Delta * (1.0 + length(force)) * 1.0;
 
   float3 spring = (float3)0;
-  float d = 1.0 / _Resolution  + max(0.0, vertices[i.id0].life) * 0.2;
+  float d = 1.0 / _Resolution;// + max(0.0, vertices[i.id0].life) * 0.2;
   // float d = 1.0 / _Resolution;
   spring += springForce(pos, pos1, d);
   spring += springForce(pos, pos2, d);

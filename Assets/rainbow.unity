@@ -271,14 +271,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f5f5eb248cf47464a9fef9c1ccc2b15a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  xSize: 30
+  xSize: 20
   ySize: 1
   resolution: 50
-  damping: 0.142
-  curl: 0.439
-  curlFreq: 0.297
-  spring: 0.615
-  smooth: 0.493
+  damping: 0.385
+  curl: 0.21
+  curlFreq: 0.397
+  spring: 0.78
+  smooth: 0.82
   computeShader: {fileID: 7200000, guid: e6263e5cc91676b4e88439dab9d77b38, type: 3}
   ParticleMaterial: {fileID: 2100000, guid: a2e119358428b0c47baa0e4e3d891561, type: 2}
   life: 100
