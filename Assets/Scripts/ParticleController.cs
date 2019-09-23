@@ -99,7 +99,7 @@ public class ParticleController : MonoBehaviour
     ParticleMaterial.SetPass(0);
 
     //Draw
-    Graphics.DrawProcedural(MeshTopology.Triangles, 6, NumParticles);
+    Graphics.DrawProceduralNow(MeshTopology.Triangles, 6, NumParticles);
   }
   #endregion
 
